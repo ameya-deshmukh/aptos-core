@@ -7,6 +7,7 @@ mod converter_test;
 mod events_test;
 mod index_test;
 mod invalid_post_request_test;
+mod multisig_transactions_test;
 mod resource_groups;
 mod state_test;
 mod string_resource_test;
