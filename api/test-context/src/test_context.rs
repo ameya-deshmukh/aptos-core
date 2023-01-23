@@ -296,8 +296,15 @@ impl TestContext {
         TransactionFactory::new(self.context.chain_id())
     }
 
-    pub fn root_account(&self) -> LocalAccount {
-        LocalAccount::new(aptos_test_root_address(), self.root_key.private_key(), 0)
+    pub async fn root_account(&self) -> LocalAccount {
+        // Fetch the actual root account's sequence number in case it has been used to sign
+        // transactions before.
+        let root_sequence_number = self.get_sequence_number(aptos_test_root_address()).await;
+        LocalAccount::new(
+            aptos_test_root_address(),
+            self.root_key.private_key(),
+            root_sequence_number,
+        )
     }
 
     pub fn latest_state_view(&self) -> DbStateView {
@@ -310,13 +317,13 @@ impl TestContext {
         LocalAccount::generate(self.rng())
     }
 
-    pub fn create_user_account(&self, account: &LocalAccount) -> SignedTransaction {
-        let mut tc = self.root_account();
+    pub async fn create_user_account(&self, account: &LocalAccount) -> SignedTransaction {
+        let mut tc = self.root_account().await;
         self.create_user_account_by(&mut tc, account)
     }
 
-    pub fn mint_user_account(&self, account: &LocalAccount) -> SignedTransaction {
-        let mut tc = self.root_account();
+    pub async fn mint_user_account(&self, account: &LocalAccount) -> SignedTransaction {
+        let mut tc = self.root_account().await;
         let factory = self.transaction_factory();
         tc.sign_with_transaction_builder(
             factory
@@ -327,7 +334,7 @@ impl TestContext {
 
     pub async fn create_and_fund_account(&mut self) -> LocalAccount {
         let account = self.gen_account();
-        self.commit_block(&vec![self.mint_user_account(&account)])
+        self.commit_block(&vec![self.mint_user_account(&account).await])
             .await;
         account
     }
@@ -412,6 +419,36 @@ impl TestContext {
         self.commit_block(&vec![txn]).await;
     }
 
+    pub async fn approve_multisig_transaction(
+        &mut self,
+        owner: &mut LocalAccount,
+        multisig_account: AccountAddress,
+        transaction_id: u64,
+    ) {
+        let factory = self.transaction_factory();
+        let txn = owner.sign_with_transaction_builder(
+            factory
+                .approve_multisig_transaction(multisig_account, transaction_id)
+                .expiration_timestamp_secs(u64::MAX),
+        );
+        self.commit_block(&vec![txn]).await;
+    }
+
+    pub async fn reject_multisig_transaction(
+        &mut self,
+        owner: &mut LocalAccount,
+        multisig_account: AccountAddress,
+        transaction_id: u64,
+    ) {
+        let factory = self.transaction_factory();
+        let txn = owner.sign_with_transaction_builder(
+            factory
+                .reject_multisig_transaction(multisig_account, transaction_id)
+                .expiration_timestamp_secs(u64::MAX),
+        );
+        self.commit_block(&vec![txn]).await;
+    }
+
     pub async fn create_multisig_transaction_with_payload_hash(
         &mut self,
         owner: &mut LocalAccount,
@@ -463,9 +500,9 @@ impl TestContext {
         )
     }
 
-    pub fn create_invalid_signature_transaction(&mut self) -> SignedTransaction {
+    pub async fn create_invalid_signature_transaction(&mut self) -> SignedTransaction {
         let factory = self.transaction_factory();
-        let root_account = self.root_account();
+        let root_account = self.root_account().await;
         let txn = factory
             .transfer(root_account.address(), 1)
             .sender(root_account.address())
@@ -559,6 +596,17 @@ impl TestContext {
             )
             .await;
         coin_balance["data"]["coin"]["value"]
+            .as_str()
+            .unwrap()
+            .parse::<u64>()
+            .unwrap()
+    }
+
+    pub async fn get_sequence_number(&self, account: AccountAddress) -> u64 {
+        let account_resource = self
+            .api_get_account_resource(account, "0x1", "account", "Account")
+            .await;
+        account_resource["data"]["sequence_number"]
             .as_str()
             .unwrap()
             .parse::<u64>()

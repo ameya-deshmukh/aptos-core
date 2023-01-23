@@ -26,7 +26,7 @@ async fn test_read_resoure_group() {
     let mut context = new_test_context(current_function_name!());
 
     // Prepare accounts
-    let mut root = context.root_account();
+    let mut root = context.root_account().await;
     let mut admin0 = create_account(&mut context, &mut root).await;
     let mut admin1 = create_account(&mut context, &mut root).await;
     let mut user = create_account(&mut context, &mut root).await;

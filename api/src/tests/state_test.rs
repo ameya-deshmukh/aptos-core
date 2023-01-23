@@ -129,7 +129,7 @@ async fn test_merkle_leaves_with_nft_transfer() {
     let ctx = &mut context;
     let creator = &mut ctx.gen_account();
     let owner = &mut ctx.gen_account();
-    let txn1 = ctx.mint_user_account(creator);
+    let txn1 = ctx.mint_user_account(creator).await;
     let txn2 = ctx.account_transfer(creator, owner, 100_000);
 
     let collection_name = "collection name".to_owned().into_bytes();
@@ -222,7 +222,7 @@ async fn test_get_table_item() {
     let ctx = &mut context;
     let mut account = ctx.gen_account();
     let acc = &mut account;
-    let txn = ctx.create_user_account(acc);
+    let txn = ctx.create_user_account(acc).await;
     ctx.commit_block(&vec![txn.clone()]).await;
     make_test_tables(ctx, acc).await;
 
