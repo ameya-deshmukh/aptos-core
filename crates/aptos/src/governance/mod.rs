@@ -1,4 +1,4 @@
-// Copyright (c) Aptos
+// Copyright © Aptos Foundation
 // SPDX-License-Identifier: Apache-2.0
 
 #[cfg(feature = "no-upload-proposal")]
@@ -279,7 +279,7 @@ pub struct SubmitProposal {
     #[clap(long)]
     pub(crate) metadata_path: Option<PathBuf>,
 
-    #[clap(long, default_value = "false")]
+    #[clap(long)]
     pub(crate) is_multi_step: bool,
 
     #[clap(flatten)]

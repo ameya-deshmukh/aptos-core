@@ -37,6 +37,7 @@ const config = {
           remarkPlugins: [codeInjector, math],
           path: "docs",
           rehypePlugins: [katex],
+          showLastUpdateTime: true,
         },
         sitemap: {
           changefreq: "daily",
@@ -96,7 +97,7 @@ const config = {
           },
           {
             type: "dropdown",
-            label: "Get Started",
+            label: "Start",
             position: "left",
             items: [
               {
@@ -128,7 +129,7 @@ const config = {
           },
           {
             type: "dropdown",
-            label: "Build Apps",
+            label: "Apps",
             position: "left",
             items: [
               {
@@ -165,7 +166,7 @@ const config = {
           },
           {
             type: "dropdown",
-            label: "Learn Move",
+            label: "Move",
             position: "left",
             items: [
               {
@@ -207,7 +208,7 @@ const config = {
           },
           {
             type: "dropdown",
-            label: "Create Tokens",
+            label: "Tokens",
             position: "left",
             items: [
               {
@@ -240,11 +241,16 @@ const config = {
                 label: "Mint NFTs with the Mint Tool",
                 docId: "concepts/coin-and-token/nft-minting-tool",
               },
+              {
+                type: "doc",
+                label: "Airdrop Aptos Tokens",
+                docId: "concepts/coin-and-token/airdrop-aptos-tokens",
+              },
             ],
           },
           {
             type: "dropdown",
-            label: "Run Nodes",
+            label: "Nodes",
             position: "left",
             items: [
               {

@@ -1,4 +1,4 @@
-// Copyright (c) Aptos
+// Copyright © Aptos Foundation
 // SPDX-License-Identifier: Apache-2.0
 
 #![forbid(unsafe_code)]
@@ -3297,7 +3297,7 @@ fn create_state_keys_and_values(
     (0..num_keys_and_values)
         .map(|_| {
             let state_value = StateValue::new(random_bytes.clone());
-            (StateKey::Raw(vec![]), state_value)
+            (StateKey::raw(vec![]), state_value)
         })
         .collect()
 }
