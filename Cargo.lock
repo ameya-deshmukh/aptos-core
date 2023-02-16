@@ -2167,6 +2167,7 @@ dependencies = [
  "move-binary-format",
  "move-core-types",
  "move-model",
+ "once_cell",
  "serde 1.0.149",
  "serde_json",
  "serde_yaml 0.8.26",
