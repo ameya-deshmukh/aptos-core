@@ -2,116 +2,128 @@
 // SPDX-License-Identifier: Apache-2.0
 
 use aptos_indexer_grpc_utils::{
-    get_file_store_bucket_name,
-    storage::{
-        generate_blob_name, get_file_store_metadata, upload_file_store_metadata, TransactionsBlob,
-        BLOB_TRANSACTION_CHUNK_SIZE,
-    },
+    cache_operator::{CacheBatchGetStatus, CacheOperator},
+    config::IndexerGrpcConfig,
+    constants::BLOB_STORAGE_SIZE,
+    file_store_operator::FileStoreOperator,
 };
 use aptos_moving_average::MovingAverage;
-use cloud_storage::Object;
-use redis::{Client, Commands};
 use std::{thread::sleep, time::Duration};
 
 pub struct Processor {
-    pub redis_client: Client,
-    current_version: u64,
-}
-
-async fn upload_blob_transactions(
-    bucket_name: String,
-    blob_object: TransactionsBlob,
-) -> anyhow::Result<()> {
-    match Object::create(
-        bucket_name.as_str(),
-        serde_json::to_vec(&blob_object).unwrap(),
-        generate_blob_name(blob_object.starting_version).as_str(),
-        "application/json",
-    )
-    .await
-    {
-        Ok(_) => Ok(()),
-        Err(err) => {
-            aptos_logger::info!(
-                error = err.to_string(),
-                "[indexer file store] Failed to process a blob; retrying in 1 second"
-            );
-            sleep(Duration::from_secs(1));
-            Err(err.into())
-        },
-    }
+    cache_operator: Option<CacheOperator<redis::aio::Connection>>,
+    file_store_processor: Option<FileStoreOperator>,
+    config: IndexerGrpcConfig,
 }
 
 impl Processor {
-    pub fn new(redis_address: String) -> Self {
+    pub fn new(config: IndexerGrpcConfig) -> Self {
         Self {
-            redis_client: Client::open(format!("redis://{}", redis_address)).unwrap(),
-            current_version: 0,
+            cache_operator: None,
+            file_store_processor: None,
+            config,
         }
+    }
+
+    async fn bootstrap(&mut self) {
+        let conn = redis::Client::open(format!("redis://{}", self.config.redis_address))
+            .expect("Create redis client failed.")
+            .get_async_connection()
+            .await
+            .expect("Create redis connection failed.");
+
+        let mut cache_operator = CacheOperator::new(conn);
+        let chain_id = cache_operator
+            .get_chain_id()
+            .await
+            .expect("Get chain id failed.");
+        let file_store_operator =
+            FileStoreOperator::new(chain_id, self.config.file_store_bucket_name.clone(), false);
+        self.cache_operator = Some(cache_operator);
+        self.file_store_processor = Some(file_store_operator);
     }
 
     // Starts the processing.
     pub async fn run(&mut self) {
-        let mut conn = self.redis_client.get_connection().unwrap();
+        self.bootstrap().await;
+        let metadata = self
+            .file_store_processor
+            .as_mut()
+            .unwrap()
+            .get_file_store_metadata()
+            .await
+            .unwrap();
+        let mut fetch_version = metadata.version;
+        let mut push_version = fetch_version;
+        let mut transactions: Vec<String> = vec![];
         let mut ma = MovingAverage::new(10_000);
-
-        let bucket_name = get_file_store_bucket_name();
-
-        let mut metadata = get_file_store_metadata(bucket_name.clone()).await;
-
-        // The current version is the version of the last blob that was uploaded.
-        self.current_version = metadata.version;
-
-        let mut metadata_ref = &mut metadata;
-        // TODO: fix this with a proper traffic control mechanism.
-        let mut prev_metadata_update_time = std::time::Instant::now();
-
+        let mut hit_head = false;
         loop {
-            let versions = (self.current_version
-                ..self.current_version + BLOB_TRANSACTION_CHUNK_SIZE)
-                .map(|e| e.to_string())
-                .collect::<Vec<String>>();
-            let transactions_blob = match conn.mget::<Vec<String>, Vec<String>>(versions) {
-                Ok(data) => TransactionsBlob {
-                    starting_version: self.current_version,
-                    transactions: data,
+            let batch_get_result = self
+                .cache_operator
+                .as_mut()
+                .unwrap()
+                .batch_get_encoded_proto_data(fetch_version)
+                .await;
+            match batch_get_result {
+                Ok(CacheBatchGetStatus::Ok(t)) => {
+                    fetch_version += t.len() as u64;
+                    transactions.extend(t);
                 },
-                Err(err) => {
-                    aptos_logger::info!(
-                        bucket = bucket_name,
-                        version = self.current_version,
-                        error = err.to_string(),
-                        "[indexer file store] Hit the head; retrying in 1 second"
-                    );
+                Ok(CacheBatchGetStatus::NotReady) => {
                     sleep(Duration::from_secs(1));
+                    aptos_logger::info!(
+                        push_version = push_version,
+                        fetch_version = fetch_version,
+                        "Cache is not ready. Sleep for 1 second."
+                    );
                     continue;
                 },
-            };
-
-            match upload_blob_transactions(bucket_name.clone(), transactions_blob).await {
-                Ok(_) => {
-                    self.current_version += BLOB_TRANSACTION_CHUNK_SIZE;
-                    metadata_ref.version += BLOB_TRANSACTION_CHUNK_SIZE;
-
-                    ma.tick_now(BLOB_TRANSACTION_CHUNK_SIZE);
+                Ok(CacheBatchGetStatus::HitTheHead(t)) => {
+                    fetch_version += t.len() as u64;
+                    transactions.extend(t);
+                    hit_head = true;
                     aptos_logger::info!(
-                        version = self.current_version,
-                        tps = (ma.avg() * 1000.0) as u64,
-                        "[indexer file store] Processed a blob"
+                        push_version = push_version,
+                        fetch_version = fetch_version,
+                        "Follow the head."
+                    );
+                },
+                Ok(CacheBatchGetStatus::EvictedFromCache) => {
+                    panic!(
+                        "Cache evicted from cache. For file store worker, this is not expected."
                     );
                 },
                 Err(err) => {
-                    aptos_logger::error!(
-                        error = err.to_string(),
-                        "[indexer file store] Failed to process a blob; retrying in 1 second"
-                    );
-                    continue;
+                    panic!("Batch get encoded proto data failed: {}", err);
                 },
             }
-            if prev_metadata_update_time + Duration::from_secs(10) < std::time::Instant::now() {
-                upload_file_store_metadata(bucket_name.clone(), *metadata_ref).await;
-                prev_metadata_update_time = std::time::Instant::now();
+            if !hit_head && transactions.len() < 10 * BLOB_STORAGE_SIZE {
+                // If we haven't hit the head, we want to collect more transactions.
+                continue;
             }
+            if hit_head && transactions.len() < BLOB_STORAGE_SIZE {
+                // If we have hit the head, we want to collect at least one batch of transactions.
+                continue;
+            }
+            let mut batch_size = BLOB_STORAGE_SIZE;
+            if !hit_head && transactions.len() >= 10 * BLOB_STORAGE_SIZE {
+                batch_size = 10 * BLOB_STORAGE_SIZE;
+            }
+            let current_batch: Vec<String> = transactions.drain(..batch_size).collect();
+            self.file_store_processor
+                .as_mut()
+                .unwrap()
+                .upload_transactions(current_batch)
+                .await
+                .unwrap();
+            ma.tick_now(batch_size as u64);
+            aptos_logger::info!(
+                tps = (ma.avg() * 1000.0) as u64,
+                version = push_version,
+                "Upload transactions to file store."
+            );
+            push_version += batch_size as u64;
         }
     }
 }

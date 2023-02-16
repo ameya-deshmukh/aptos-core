@@ -9,12 +9,8 @@ Indexer GRPC data service fetches data from both cache and file store.
 * Command-line to run:
 
 ```bash
-SERVICE_ACCOUNT=xxx.json \
-REDIS_ADDRESS=127.0.0.1 \
-CHAIN_NAME=devnet \
-GRPC_ADDRESS=0.0.0.0:50052 \
-FILE_STORE_BUCKET_NAME=indexer-grpc-file-store \
-FILE_STORE_BLOB_FOLDER_NAME=blobs \
-HEALTH_CHECK_PORT=8083 \
-cargo run --release
+data_service_grpc_listen_address: 0.0.0.0:50052
+redis_address: 127.0.0.1:6379
+file_store_bucket_name: indexer-grpc-file-store-testnet 
+health_check_port: 8081
 ```

@@ -95,6 +95,26 @@ pub mod indexer_stream_client {
             );
             self.inner.server_streaming(request.into_request(), path, codec).await
         }
+        ///
+        pub async fn on_chain_data_summary(
+            &mut self,
+            request: impl tonic::IntoRequest<super::OnChainDataSummaryRequest>,
+        ) -> Result<tonic::Response<super::OnChainDataSummaryResponse>, tonic::Status> {
+            self.inner
+                .ready()
+                .await
+                .map_err(|e| {
+                    tonic::Status::new(
+                        tonic::Code::Unknown,
+                        format!("Service was not ready: {}", e.into()),
+                    )
+                })?;
+            let codec = tonic::codec::ProstCodec::default();
+            let path = http::uri::PathAndQuery::from_static(
+                "/aptos.datastream.v1.IndexerStream/OnChainDataSummary",
+            );
+            self.inner.unary(request.into_request(), path, codec).await
+        }
     }
 }
 /// Generated server implementations.
@@ -115,6 +135,11 @@ pub mod indexer_stream_server {
             &self,
             request: tonic::Request<super::RawDatastreamRequest>,
         ) -> Result<tonic::Response<Self::RawDatastreamStream>, tonic::Status>;
+        ///
+        async fn on_chain_data_summary(
+            &self,
+            request: tonic::Request<super::OnChainDataSummaryRequest>,
+        ) -> Result<tonic::Response<super::OnChainDataSummaryResponse>, tonic::Status>;
     }
     ///
     #[derive(Debug)]
@@ -213,6 +238,46 @@ pub mod indexer_stream_server {
                                 send_compression_encodings,
                             );
                         let res = grpc.server_streaming(method, req).await;
+                        Ok(res)
+                    };
+                    Box::pin(fut)
+                }
+                "/aptos.datastream.v1.IndexerStream/OnChainDataSummary" => {
+                    #[allow(non_camel_case_types)]
+                    struct OnChainDataSummarySvc<T: IndexerStream>(pub Arc<T>);
+                    impl<
+                        T: IndexerStream,
+                    > tonic::server::UnaryService<super::OnChainDataSummaryRequest>
+                    for OnChainDataSummarySvc<T> {
+                        type Response = super::OnChainDataSummaryResponse;
+                        type Future = BoxFuture<
+                            tonic::Response<Self::Response>,
+                            tonic::Status,
+                        >;
+                        fn call(
+                            &mut self,
+                            request: tonic::Request<super::OnChainDataSummaryRequest>,
+                        ) -> Self::Future {
+                            let inner = self.0.clone();
+                            let fut = async move {
+                                (*inner).on_chain_data_summary(request).await
+                            };
+                            Box::pin(fut)
+                        }
+                    }
+                    let accept_compression_encodings = self.accept_compression_encodings;
+                    let send_compression_encodings = self.send_compression_encodings;
+                    let inner = self.inner.clone();
+                    let fut = async move {
+                        let inner = inner.0;
+                        let method = OnChainDataSummarySvc(inner);
+                        let codec = tonic::codec::ProstCodec::default();
+                        let mut grpc = tonic::server::Grpc::new(codec)
+                            .apply_compression_config(
+                                accept_compression_encodings,
+                                send_compression_encodings,
+                            );
+                        let res = grpc.unary(method, req).await;
                         Ok(res)
                     };
                     Box::pin(fut)

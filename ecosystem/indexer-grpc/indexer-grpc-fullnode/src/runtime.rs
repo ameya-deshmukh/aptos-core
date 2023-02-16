@@ -11,7 +11,8 @@ use aptos_protos::datastream::v1::{
     indexer_stream_server::{IndexerStream, IndexerStreamServer},
     raw_datastream_response,
     stream_status::StatusType,
-    RawDatastreamRequest, RawDatastreamResponse, StreamStatus,
+    OnChainDataSummaryRequest, OnChainDataSummaryResponse, RawDatastreamRequest,
+    RawDatastreamResponse, StreamStatus,
 };
 use aptos_storage_interface::DbReader;
 use aptos_types::chain_id::ChainId;
@@ -183,6 +184,15 @@ impl IndexerStream for IndexerStreamService {
         Ok(Response::new(
             Box::pin(output_stream) as Self::RawDatastreamStream
         ))
+    }
+
+    async fn on_chain_data_summary(
+        &self,
+        _req: Request<OnChainDataSummaryRequest>,
+    ) -> Result<Response<OnChainDataSummaryResponse>, Status> {
+        Ok(Response::new(OnChainDataSummaryResponse {
+            chain_id: self.context.chain_id().id() as u32,
+        }))
     }
 }
 

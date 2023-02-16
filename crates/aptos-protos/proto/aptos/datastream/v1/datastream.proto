@@ -42,6 +42,9 @@ message StreamStatus {
 message RawDatastreamRequest {
   // Required; start version of current stream.
   uint64 starting_version = 1;
+
+  // Optional; end version of current stream, exclusive.
+  optional uint64 ending_version = 2;
 }
 
 message RawDatastreamResponse {
@@ -57,6 +60,14 @@ message RawDatastreamResponse {
   uint32 chain_id = 3;
 }
 
+// OnChainDataSummaryRequest is a request for the current on-chain data summary.
+message OnChainDataSummaryRequest {}
+message OnChainDataSummaryResponse {
+  uint32 chain_id = 1;
+  // uint64 epoch = 2;
+}
+
 service IndexerStream {
     rpc RawDatastream(RawDatastreamRequest) returns (stream RawDatastreamResponse);
+    rpc OnChainDataSummary(OnChainDataSummaryRequest) returns (OnChainDataSummaryResponse);
 }

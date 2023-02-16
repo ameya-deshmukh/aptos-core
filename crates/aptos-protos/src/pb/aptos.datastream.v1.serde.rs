@@ -2,7 +2,78 @@
 // SPDX-License-Identifier: Apache-2.0
 
 // @generated
-impl serde::Serialize for RawDatastreamRequest {
+impl serde::Serialize for OnChainDataSummaryRequest {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let len = 0;
+        let struct_ser = serializer.serialize_struct("aptos.datastream.v1.OnChainDataSummaryRequest", len)?;
+        struct_ser.end()
+    }
+}
+impl<'de> serde::Deserialize<'de> for OnChainDataSummaryRequest {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+        ];
+
+        #[allow(clippy::enum_variant_names)]
+        enum GeneratedField {
+        }
+        impl<'de> serde::Deserialize<'de> for GeneratedField {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct GeneratedVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+                    type Value = GeneratedField;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        write!(formatter, "expected one of: {:?}", &FIELDS)
+                    }
+
+                    #[allow(unused_variables)]
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                            Err(serde::de::Error::unknown_field(value, FIELDS))
+                    }
+                }
+                deserializer.deserialize_identifier(GeneratedVisitor)
+            }
+        }
+        struct GeneratedVisitor;
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = OnChainDataSummaryRequest;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("struct aptos.datastream.v1.OnChainDataSummaryRequest")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> std::result::Result<OnChainDataSummaryRequest, V::Error>
+                where
+                    V: serde::de::MapAccess<'de>,
+            {
+                while map.next_key::<GeneratedField>()?.is_some() {
+                    let _ = map.next_value::<serde::de::IgnoredAny>()?;
+                }
+                Ok(OnChainDataSummaryRequest {
+                })
+            }
+        }
+        deserializer.deserialize_struct("aptos.datastream.v1.OnChainDataSummaryRequest", FIELDS, GeneratedVisitor)
+    }
+}
+impl serde::Serialize for OnChainDataSummaryResponse {
     #[allow(deprecated)]
     fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
     where
@@ -10,29 +81,30 @@ impl serde::Serialize for RawDatastreamRequest {
     {
         use serde::ser::SerializeStruct;
         let mut len = 0;
-        if self.starting_version != 0 {
+        if self.chain_id != 0 {
             len += 1;
         }
-        let mut struct_ser = serializer.serialize_struct("aptos.datastream.v1.RawDatastreamRequest", len)?;
-        if self.starting_version != 0 {
-            struct_ser.serialize_field("startingVersion", ToString::to_string(&self.starting_version).as_str())?;
+        let mut struct_ser = serializer.serialize_struct("aptos.datastream.v1.OnChainDataSummaryResponse", len)?;
+        if self.chain_id != 0 {
+            struct_ser.serialize_field("chainId", &self.chain_id)?;
         }
         struct_ser.end()
     }
 }
-impl<'de> serde::Deserialize<'de> for RawDatastreamRequest {
+impl<'de> serde::Deserialize<'de> for OnChainDataSummaryResponse {
     #[allow(deprecated)]
     fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
     where
         D: serde::Deserializer<'de>,
     {
         const FIELDS: &[&str] = &[
-            "startingVersion",
+            "chain_id",
+            "chainId",
         ];
 
         #[allow(clippy::enum_variant_names)]
         enum GeneratedField {
-            StartingVersion,
+            ChainId,
         }
         impl<'de> serde::Deserialize<'de> for GeneratedField {
             fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
@@ -54,7 +126,111 @@ impl<'de> serde::Deserialize<'de> for RawDatastreamRequest {
                         E: serde::de::Error,
                     {
                         match value {
-                            "startingVersion" => Ok(GeneratedField::StartingVersion),
+                            "chainId" | "chain_id" => Ok(GeneratedField::ChainId),
+                            _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
+                        }
+                    }
+                }
+                deserializer.deserialize_identifier(GeneratedVisitor)
+            }
+        }
+        struct GeneratedVisitor;
+        impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+            type Value = OnChainDataSummaryResponse;
+
+            fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                formatter.write_str("struct aptos.datastream.v1.OnChainDataSummaryResponse")
+            }
+
+            fn visit_map<V>(self, mut map: V) -> std::result::Result<OnChainDataSummaryResponse, V::Error>
+                where
+                    V: serde::de::MapAccess<'de>,
+            {
+                let mut chain_id__ = None;
+                while let Some(k) = map.next_key()? {
+                    match k {
+                        GeneratedField::ChainId => {
+                            if chain_id__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("chainId"));
+                            }
+                            chain_id__ =
+                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                    }
+                }
+                Ok(OnChainDataSummaryResponse {
+                    chain_id: chain_id__.unwrap_or_default(),
+                })
+            }
+        }
+        deserializer.deserialize_struct("aptos.datastream.v1.OnChainDataSummaryResponse", FIELDS, GeneratedVisitor)
+    }
+}
+impl serde::Serialize for RawDatastreamRequest {
+    #[allow(deprecated)]
+    fn serialize<S>(&self, serializer: S) -> std::result::Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeStruct;
+        let mut len = 0;
+        if self.starting_version != 0 {
+            len += 1;
+        }
+        if self.ending_version.is_some() {
+            len += 1;
+        }
+        let mut struct_ser = serializer.serialize_struct("aptos.datastream.v1.RawDatastreamRequest", len)?;
+        if self.starting_version != 0 {
+            struct_ser.serialize_field("startingVersion", ToString::to_string(&self.starting_version).as_str())?;
+        }
+        if let Some(v) = self.ending_version.as_ref() {
+            struct_ser.serialize_field("endingVersion", ToString::to_string(&v).as_str())?;
+        }
+        struct_ser.end()
+    }
+}
+impl<'de> serde::Deserialize<'de> for RawDatastreamRequest {
+    #[allow(deprecated)]
+    fn deserialize<D>(deserializer: D) -> std::result::Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        const FIELDS: &[&str] = &[
+            "starting_version",
+            "startingVersion",
+            "ending_version",
+            "endingVersion",
+        ];
+
+        #[allow(clippy::enum_variant_names)]
+        enum GeneratedField {
+            StartingVersion,
+            EndingVersion,
+        }
+        impl<'de> serde::Deserialize<'de> for GeneratedField {
+            fn deserialize<D>(deserializer: D) -> std::result::Result<GeneratedField, D::Error>
+            where
+                D: serde::Deserializer<'de>,
+            {
+                struct GeneratedVisitor;
+
+                impl<'de> serde::de::Visitor<'de> for GeneratedVisitor {
+                    type Value = GeneratedField;
+
+                    fn expecting(&self, formatter: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+                        write!(formatter, "expected one of: {:?}", &FIELDS)
+                    }
+
+                    #[allow(unused_variables)]
+                    fn visit_str<E>(self, value: &str) -> std::result::Result<GeneratedField, E>
+                    where
+                        E: serde::de::Error,
+                    {
+                        match value {
+                            "startingVersion" | "starting_version" => Ok(GeneratedField::StartingVersion),
+                            "endingVersion" | "ending_version" => Ok(GeneratedField::EndingVersion),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -75,20 +251,30 @@ impl<'de> serde::Deserialize<'de> for RawDatastreamRequest {
                     V: serde::de::MapAccess<'de>,
             {
                 let mut starting_version__ = None;
+                let mut ending_version__ = None;
                 while let Some(k) = map.next_key()? {
                     match k {
                         GeneratedField::StartingVersion => {
                             if starting_version__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("startingVersion"));
                             }
-                            starting_version__ = Some(
-                                map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0
-                            );
+                            starting_version__ =
+                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
+                        }
+                        GeneratedField::EndingVersion => {
+                            if ending_version__.is_some() {
+                                return Err(serde::de::Error::duplicate_field("endingVersion"));
+                            }
+                            ending_version__ =
+                                map.next_value::<::std::option::Option<::pbjson::private::NumberDeserialize<_>>>()?.map(|x| x.0)
+                            ;
                         }
                     }
                 }
                 Ok(RawDatastreamRequest {
                     starting_version: starting_version__.unwrap_or_default(),
+                    ending_version: ending_version__,
                 })
             }
         }
@@ -133,6 +319,7 @@ impl<'de> serde::Deserialize<'de> for RawDatastreamResponse {
         D: serde::Deserializer<'de>,
     {
         const FIELDS: &[&str] = &[
+            "chain_id",
             "chainId",
             "status",
             "data",
@@ -164,7 +351,7 @@ impl<'de> serde::Deserialize<'de> for RawDatastreamResponse {
                         E: serde::de::Error,
                     {
                         match value {
-                            "chainId" => Ok(GeneratedField::ChainId),
+                            "chainId" | "chain_id" => Ok(GeneratedField::ChainId),
                             "status" => Ok(GeneratedField::Status),
                             "data" => Ok(GeneratedField::Data),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
@@ -194,21 +381,23 @@ impl<'de> serde::Deserialize<'de> for RawDatastreamResponse {
                             if chain_id__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("chainId"));
                             }
-                            chain_id__ = Some(
-                                map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0
-                            );
+                            chain_id__ =
+                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
                         }
                         GeneratedField::Status => {
                             if response__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("status"));
                             }
-                            response__ = Some(raw_datastream_response::Response::Status(map.next_value()?));
+                            response__ = map.next_value::<::std::option::Option<_>>()?.map(raw_datastream_response::Response::Status)
+;
                         }
                         GeneratedField::Data => {
                             if response__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("data"));
                             }
-                            response__ = Some(raw_datastream_response::Response::Data(map.next_value()?));
+                            response__ = map.next_value::<::std::option::Option<_>>()?.map(raw_datastream_response::Response::Data)
+;
                         }
                     }
                 }
@@ -334,7 +523,9 @@ impl<'de> serde::Deserialize<'de> for StreamStatus {
     {
         const FIELDS: &[&str] = &[
             "type",
+            "start_version",
             "startVersion",
+            "end_version",
             "endVersion",
         ];
 
@@ -365,8 +556,8 @@ impl<'de> serde::Deserialize<'de> for StreamStatus {
                     {
                         match value {
                             "type" => Ok(GeneratedField::Type),
-                            "startVersion" => Ok(GeneratedField::StartVersion),
-                            "endVersion" => Ok(GeneratedField::EndVersion),
+                            "startVersion" | "start_version" => Ok(GeneratedField::StartVersion),
+                            "endVersion" | "end_version" => Ok(GeneratedField::EndVersion),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
                         }
                     }
@@ -401,17 +592,17 @@ impl<'de> serde::Deserialize<'de> for StreamStatus {
                             if start_version__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("startVersion"));
                             }
-                            start_version__ = Some(
-                                map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0
-                            );
+                            start_version__ =
+                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
                         }
                         GeneratedField::EndVersion => {
                             if end_version__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("endVersion"));
                             }
-                            end_version__ = Some(
-                                map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0
-                            );
+                            end_version__ =
+                                map.next_value::<::std::option::Option<::pbjson::private::NumberDeserialize<_>>>()?.map(|x| x.0)
+                            ;
                         }
                     }
                 }
@@ -535,6 +726,7 @@ impl<'de> serde::Deserialize<'de> for TransactionOutput {
         D: serde::Deserializer<'de>,
     {
         const FIELDS: &[&str] = &[
+            "encoded_proto_data",
             "encodedProtoData",
             "version",
             "timestamp",
@@ -566,7 +758,7 @@ impl<'de> serde::Deserialize<'de> for TransactionOutput {
                         E: serde::de::Error,
                     {
                         match value {
-                            "encodedProtoData" => Ok(GeneratedField::EncodedProtoData),
+                            "encodedProtoData" | "encoded_proto_data" => Ok(GeneratedField::EncodedProtoData),
                             "version" => Ok(GeneratedField::Version),
                             "timestamp" => Ok(GeneratedField::Timestamp),
                             _ => Err(serde::de::Error::unknown_field(value, FIELDS)),
@@ -603,15 +795,15 @@ impl<'de> serde::Deserialize<'de> for TransactionOutput {
                             if version__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("version"));
                             }
-                            version__ = Some(
-                                map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0
-                            );
+                            version__ =
+                                Some(map.next_value::<::pbjson::private::NumberDeserialize<_>>()?.0)
+                            ;
                         }
                         GeneratedField::Timestamp => {
                             if timestamp__.is_some() {
                                 return Err(serde::de::Error::duplicate_field("timestamp"));
                             }
-                            timestamp__ = Some(map.next_value()?);
+                            timestamp__ = map.next_value()?;
                         }
                     }
                 }
